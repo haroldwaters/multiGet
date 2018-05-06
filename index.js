@@ -146,11 +146,12 @@ let main = async function(){
     const remainder = byteCount % chunkSize;
 
     let fileName;
-    if(args['filename']){
-        fileName = './downloads' + args['filename']
+    let downloadDir = './downloads/';
+    if(args['name']){
+        fileName = downloadDir + args['name']
     }
     else{
-        fileName = './downloads/test.txt';
+        fileName = downloadDir + 'test.txt';
     }
 
     let calls = [];
