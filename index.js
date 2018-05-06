@@ -18,7 +18,7 @@ let didFail = function(statusCode){
  * @param {String} target 
  * @returns {Promise}
  */
-let getContentLengthReq = function(target){
+let getContentInfo = function(target){
     const targetURL = new URL(target);
     let options = {
         hostname: targetURL.host,
@@ -29,7 +29,7 @@ let getContentLengthReq = function(target){
     return new Promise((resolve, reject)=>{
         http.get(options, (res) => {
             if(didFail(res.statusCode)) reject(new Error('Request Failed'))
-            resolve(res.headers['content-length']);
+            resolve(res);
         })
     });
 }
@@ -70,7 +70,6 @@ let getContentChunk = function(target, fd, start, size){
             Range: `bytes=${start}-${start + size - 1}`
         }
     };
-
     return new Promise((resolve,reject)=>{
         http.get(options, (res) => {
 
@@ -109,7 +108,9 @@ let checkSize = function(testSize, fileSize){
 let args = parser.parseArgs();
 
 let main = async function(){
-    let contentLength = await getContentLengthReq(target);
+
+    let contentInfo = await getContentInfo(target);
+    let contentLength = contentInfo.headers['content-length'];
 
     if(args['chunksize'] && args['chunks']){
         throw new Error('Chunks and chunksize cannot both be specified!');
@@ -155,7 +156,6 @@ let main = async function(){
     let startPos = 0;
 
     //Create the space to write to by creating a file the same size as what's being downloaded
-    // fs.writeFile(fileName, Buffer.alloc(parseInt(byteCount)),()=>{
     fs.writeFileSync(fileName, Buffer.alloc(parseInt(byteCount)))
     //Create a file decriptor for the file just opened
     fs.open(fileName, 'w', (err, fd)=> {
