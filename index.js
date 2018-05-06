@@ -109,7 +109,7 @@ let main = async function(){
         chunkSize = Math.floor(byteCount/chunkCount);
     }
     else if(args['chunksize']){
-        //Larger filesize are allowed in the request, but for the sake on cleanliness I'll disallow it
+        //Larger filesizes than actual filesize are allowed in the request, but for the sake of cleanliness I'll disallow it
         chunkSize = checkSize(args['chunksize'], contentLength);
         chunkCount = Math.floor(byteCount/chunkSize);
     }
@@ -119,28 +119,27 @@ let main = async function(){
     let startPos = 0;
     let fileName = './downloads/test.txt';
 
-    await fs.writeFile(fileName, Buffer.alloc(parseInt(byteCount)));
-
-    fs.open(fileName, 'w', (err, fd)=> {
-        console.time('main');
-        while(startPos < byteCount){
-            if( startPos + remainder < byteCount){
-                console.log(startPos + ' ' + (chunkSize + startPos));
-                calls.push(getContentChunk(target, fd, startPos, chunkSize));
+    fs.writeFile(fileName, Buffer.alloc(parseInt(byteCount)),()=>{
+        fs.open(fileName, 'w', (err, fd)=> {
+            console.time('main');
+            while(startPos < byteCount){
+                if( startPos + remainder < byteCount){
+                    console.log(startPos + ' ' + (chunkSize + startPos));
+                    calls.push(getContentChunk(target, fd, startPos, chunkSize));
+                }
+                else{
+                    console.log(startPos + ' ' + (chunkSize + startPos));
+                    calls.push(getContentChunk(target, fd, startPos, remainder));
+                    startPos += remainder;
+                }
+                startPos += chunkSize;
             }
-            else{
-                console.log(startPos + ' ' + (chunkSize + startPos));
-                calls.push(getContentChunk(target, fd, startPos, remainder));
-                startPos += remainder;
-            }
-            startPos += chunkSize;
-        }
 
-        Promise.all(calls).then((values)=>{
-            console.timeEnd('main');
-        })
+            Promise.all(calls).then((values)=>{
+                console.timeEnd('main');
+            })
+        });
     });
-    return 0;
 }
 
 main();
