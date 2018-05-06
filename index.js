@@ -1,94 +1,13 @@
 'use strict'
 
-const http = require('http');
 const fs = require('fs');
-const { URL } = require('url');
-
 const parser = require('./clargs');
+const {getContentChunk, getContentInfo} = require('./requests');
+const {makeBlankFile} = require('./filework');
+
 
 // let target = 'https://httpbin.org/range/1024';
 let target = 'http://40ff26ef.bwtest-aws.pravala.com/384MB.jar';
-
-
-let didFail = function(statusCode){
-    return statusCode < 200 && statusCode >= 300;
-}
-
-/**
- * @param {String} target 
- * @returns {Promise}
- */
-let getContentInfo = function(target){
-    const targetURL = new URL(target);
-    let options = {
-        hostname: targetURL.host,
-        path: targetURL.pathname,
-        method: 'HEAD'
-    };
-
-    return new Promise((resolve, reject)=>{
-        http.get(options, (res) => {
-            if(didFail(res.statusCode)) reject(new Error('Request Failed'))
-            resolve(res);
-        })
-    });
-}
-
-/**
- * 
- * @param {FileDescriptor} fd 
- * @param {Int} start 
- * @param {Int} size 
- * @param {Buffer} buffer 
- */
-let writeChunk = function(fd, start, size, buffer){
-
-    return new Promise((resolve, reject) => {
-        fs.write(fd, buffer, 0, size, start, (err, written, string)=>{
-            if(err) reject(err);
-            resolve(written);
-        });
-    });
-
-}
-
-/**
- * @param {string} target 
- * @param {FileDescriptor} fd 
- * @param {Int} start 
- * @param {Int} size 
- * @return {Promise}
- */
-let getContentChunk = function(target, fd, start, size){
-    //Parse the given target so the path can be pulled out
-    const targetURL = new URL(target);
-    let options = {
-        hostname: targetURL.host,
-        path: targetURL.pathname,
-        method: 'GET',
-        headers:{
-            Range: `bytes=${start}-${start + size - 1}`
-        }
-    };
-    return new Promise((resolve,reject)=>{
-        http.get(options, (res) => {
-
-                let buffers = [];
-
-                if(didFail(res.statusCode)) reject(new Error('Request Failed'))
-                res.on('error', (error) => reject(new Error(`Error occured retreiving chunks ${start}-${start + size}`)));
-                
-                res.on('data', (buffer) => buffers.push(buffer));
-                res.on('end', ()=>{
-                    
-                    writeChunk(fd, start, size, Buffer.concat(buffers)).then((written)=>{
-                        resolve(written);
-                    })
-                    .catch(err => reject(err));
-                });
-            });
-        });
-    }
 
 /**
  * @description Returns num2 if num1 is larger else returns num1 
@@ -158,7 +77,7 @@ let main = async function(){
     let startPos = 0;
 
     //Create the space to write to by creating a file the same size as what's being downloaded
-    fs.writeFileSync(fileName, Buffer.alloc(parseInt(byteCount)))
+    makeBlankFile(fileName, byteCount);
     //Create a file decriptor for the file just opened
     fs.open(fileName, 'w', (err, fd)=> {
         console.time('main');
@@ -185,4 +104,4 @@ let main = async function(){
 
 main()
     .then(()=> {return 0;})
-    .catch(()=> {return 1;});
+    .catch((err)=> {throw err});
