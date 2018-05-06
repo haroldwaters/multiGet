@@ -72,7 +72,8 @@ let getContentChunk = function(target, fd, start, size){
 
                 let buffers = [];
 
-                if(res.statusCode !== 206) reject(new Error('Request Failed'))
+                console.log(res.statusCode);
+                if(res.statusCode < 200 && res.statusCode >= 300 ) reject(new Error('Request Failed'))
                 res.on('error', (error) => reject(new Error(`Error occured retreiving chunks ${start}-${start + size}`)));
                 
                 res.on('data', (buffer) => buffers.push(buffer));
@@ -131,6 +132,10 @@ let main = async function(){
         //Larger filesizes than actual filesize are allowed in the request, but for the sake of cleanliness I'll disallow it
         chunkSize = checkSize(args['chunksize'], contentLength);
         chunkCount = Math.floor(byteCount/chunkSize);
+    }
+    else{
+        chunkCount = 1;
+        chunkSize = byteCount;
     }
     const remainder = byteCount % chunkSize;
 
