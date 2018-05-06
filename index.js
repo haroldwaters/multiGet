@@ -29,6 +29,8 @@ let main = async function(){
 
     let args = parser.parseArgs();
 
+    const target = args['target'];
+
     let contentInfo = await getContentInfo(target);
     let contentLength = contentInfo.headers['content-length'];
 
@@ -77,17 +79,17 @@ let main = async function(){
     let startPos = 0;
 
     //Create the space to write to by creating a file the same size as what's being downloaded
-    makeBlankFile(fileName, byteCount);
+    makeBlankFile(fileName, parseInt(byteCount));
     //Create a file decriptor for the file just opened
     fs.open(fileName, 'w', (err, fd)=> {
-        console.time('main');
+        console.time('timeToWrite');
         while(startPos < byteCount){
             if( startPos + remainder < byteCount){
-                console.log(startPos + ' ' + (chunkSize + startPos));
+                // console.log(startPos + ' ' + (chunkSize + startPos));
                 calls.push(getContentChunk(target, fd, startPos, chunkSize));
             }
             else{
-                console.log(startPos + ' ' + (remainder + startPos));
+                // console.log(startPos + ' ' + (remainder + startPos));
                 calls.push(getContentChunk(target, fd, startPos, remainder));
                 startPos += remainder;
             }
@@ -95,7 +97,7 @@ let main = async function(){
         }
 
         Promise.all(calls).then((values)=>{
-            console.timeEnd('main');
+            console.timeEnd('timeToWrite');
         }).catch((err) =>{
             throw err;
         })
