@@ -31,6 +31,24 @@ let getContentLengthReq = function(target){
 }
 
 /**
+ * 
+ * @param {FileDescriptor} fd 
+ * @param {Int} start 
+ * @param {Int} size 
+ * @param {Buffer} buffer 
+ */
+let writeChunk = function(fd, start, size, buffer){
+
+    return new Promise((resolve, reject) => {
+        fs.write(fd, buffer, 0, size, start, (err, written, string)=>{
+            if(err) reject(err);
+            resolve(written);
+        });
+    });
+
+}
+
+/**
  * @param {string} target 
  * @param {FileDescriptor} fd 
  * @param {Int} start 
@@ -60,9 +78,10 @@ let getContentChunk = function(target, fd, start, size){
                 res.on('data', (buffer) => buffers.push(buffer));
                 res.on('end', ()=>{
                     
-                    fs.write(fd, Buffer.concat(buffers), 0, size, start, (err, written, string)=>{
+                    writeChunk(fd, start, size, Buffer.concat(buffers)).then((written)=>{
                         resolve(written);
-                    });
+                    })
+                    .catch(err => reject(err));
                 });
             });
         });
@@ -115,11 +134,20 @@ let main = async function(){
     }
     const remainder = byteCount % chunkSize;
 
+    let fileName;
+    if(args['filename']){
+        fileName = './downloads' + args['filename']
+    }
+    else{
+        fileName = './downloads/test.txt';
+    }
+
     let calls = [];
     let startPos = 0;
-    let fileName = './downloads/test.txt';
 
+    //Create the space to write to by creating a file the same size as what's being downloaded
     fs.writeFile(fileName, Buffer.alloc(parseInt(byteCount)),()=>{
+        //Create a file decriptor for the file just opened
         fs.open(fileName, 'w', (err, fd)=> {
             console.time('main');
             while(startPos < byteCount){
@@ -137,6 +165,8 @@ let main = async function(){
 
             Promise.all(calls).then((values)=>{
                 console.timeEnd('main');
+            }).catch((err) =>{
+                throw err;
             })
         });
     });
