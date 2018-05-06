@@ -1,10 +1,10 @@
 'use strict'
 
 const fs = require('fs');
+const async = require('async')
 const parser = require('./clargs');
 const {getContentChunk, getContentInfo} = require('./requests');
 const {makeBlankFile} = require('./filework');
-
 
 // let target = 'https://httpbin.org/range/1024';
 let target = 'http://40ff26ef.bwtest-aws.pravala.com/384MB.jar';
@@ -85,22 +85,23 @@ let main = async function(){
         console.time('timeToWrite');
         while(startPos < byteCount){
             if( startPos + remainder < byteCount){
-                // console.log(startPos + ' ' + (chunkSize + startPos));
-                calls.push(getContentChunk(target, fd, startPos, chunkSize));
+                calls.push({startPos: startPos, size: chunkSize});
+                startPos += chunkSize;
             }
             else{
-                // console.log(startPos + ' ' + (remainder + startPos));
-                calls.push(getContentChunk(target, fd, startPos, remainder));
+                calls.push({startPos: startPos, size: remainder});
                 startPos += remainder;
             }
-            startPos += chunkSize;
         }
-
-        Promise.all(calls).then((values)=>{
+        async.each(calls, (item, callback)=>{
+            getContentChunk(target, fd, item.startPos, item.size).then((res)=>{
+                callback(null, res);
+            }).catch((err)=>{
+                callback(err);
+            });
+        },(err, results)=>{
             console.timeEnd('timeToWrite');
-        }).catch((err) =>{
-            throw err;
-        })
+        });
     });
 }
 
