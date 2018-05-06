@@ -10,6 +10,10 @@ const parser = require('./clargs');
 let target = 'http://40ff26ef.bwtest-aws.pravala.com/384MB.jar';
 
 
+let didFail = function(statusCode){
+    return statusCode < 200 && statusCode >= 300;
+}
+
 /**
  * @param {String} target 
  * @returns {Promise}
@@ -24,7 +28,7 @@ let getContentLengthReq = function(target){
 
     return new Promise((resolve, reject)=>{
         http.get(options, (res) => {
-            if(res.statusCode !== 200) reject(new Error('Request Failed'))
+            if(didFail(res.statusCode)) reject(new Error('Request Failed'))
             resolve(res.headers['content-length']);
         })
     });
@@ -72,8 +76,7 @@ let getContentChunk = function(target, fd, start, size){
 
                 let buffers = [];
 
-                console.log(res.statusCode);
-                if(res.statusCode < 200 && res.statusCode >= 300 ) reject(new Error('Request Failed'))
+                if(didFail(res.statusCode)) reject(new Error('Request Failed'))
                 res.on('error', (error) => reject(new Error(`Error occured retreiving chunks ${start}-${start + size}`)));
                 
                 res.on('data', (buffer) => buffers.push(buffer));
@@ -134,6 +137,7 @@ let main = async function(){
         chunkCount = Math.floor(byteCount/chunkSize);
     }
     else{
+        //If not specified on cl, download entire file in one chunk
         chunkCount = 1;
         chunkSize = byteCount;
     }
@@ -151,29 +155,29 @@ let main = async function(){
     let startPos = 0;
 
     //Create the space to write to by creating a file the same size as what's being downloaded
-    fs.writeFile(fileName, Buffer.alloc(parseInt(byteCount)),()=>{
-        //Create a file decriptor for the file just opened
-        fs.open(fileName, 'w', (err, fd)=> {
-            console.time('main');
-            while(startPos < byteCount){
-                if( startPos + remainder < byteCount){
-                    console.log(startPos + ' ' + (chunkSize + startPos));
-                    calls.push(getContentChunk(target, fd, startPos, chunkSize));
-                }
-                else{
-                    console.log(startPos + ' ' + (chunkSize + startPos));
-                    calls.push(getContentChunk(target, fd, startPos, remainder));
-                    startPos += remainder;
-                }
-                startPos += chunkSize;
+    // fs.writeFile(fileName, Buffer.alloc(parseInt(byteCount)),()=>{
+    fs.writeFileSync(fileName, Buffer.alloc(parseInt(byteCount)))
+    //Create a file decriptor for the file just opened
+    fs.open(fileName, 'w', (err, fd)=> {
+        console.time('main');
+        while(startPos < byteCount){
+            if( startPos + remainder < byteCount){
+                console.log(startPos + ' ' + (chunkSize + startPos));
+                calls.push(getContentChunk(target, fd, startPos, chunkSize));
             }
+            else{
+                console.log(startPos + ' ' + (remainder + startPos));
+                calls.push(getContentChunk(target, fd, startPos, remainder));
+                startPos += remainder;
+            }
+            startPos += chunkSize;
+        }
 
-            Promise.all(calls).then((values)=>{
-                console.timeEnd('main');
-            }).catch((err) =>{
-                throw err;
-            })
-        });
+        Promise.all(calls).then((values)=>{
+            console.timeEnd('main');
+        }).catch((err) =>{
+            throw err;
+        })
     });
 }
 
