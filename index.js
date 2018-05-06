@@ -105,9 +105,10 @@ let checkSize = function(testSize, fileSize){
 
 }
 //===============================================
-let args = parser.parseArgs();
 
 let main = async function(){
+
+    let args = parser.parseArgs();
 
     let contentInfo = await getContentInfo(target);
     let contentLength = contentInfo.headers['content-length'];
@@ -181,4 +182,6 @@ let main = async function(){
     });
 }
 
-main();
+main()
+    .then(()=> {return 0;})
+    .catch(()=> {return 1;});
