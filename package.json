@@ -1,0 +1,26 @@
+{
+  "name": "multiget",
+  "version": "1.0.0",
+  "description": "Downloads files in chunks",
+  "main": "index.js",
+  "dependencies": {
+    "argparse": "^1.0.10",
+    "async": "^2.6.0"
+  },
+  "devDependencies": {
+    "mocha": "^5.1.1"
+  },
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/haroldwaters/multiget.git"
+  },
+  "author": "Harold Waters",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/haroldwaters/multiget/issues"
+  },
+  "homepage": "https://github.com/haroldwaters/multiget#readme"
+}
