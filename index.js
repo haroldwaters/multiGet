@@ -117,7 +117,7 @@ let main = async function(){
 
     let calls = [];
     let startPos = 0;
-    let fileName = 'test.txt';
+    let fileName = './downloads/test.txt';
 
     await fs.writeFile(fileName, Buffer.alloc(parseInt(byteCount)));
 

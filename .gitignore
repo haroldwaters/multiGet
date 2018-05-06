@@ -1,2 +1,3 @@
+downloads/*
 node_modules/*
-m*.code-workspace
+*.code-workspace
