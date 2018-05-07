@@ -21,6 +21,14 @@ let checkSize = function(testSize, fileSize){
 
 }
 
+/*
+    Main follows these basic steps
+        1) Parse args and determine fileSize, chunkCount, and chunkSize
+        2) Create a blank file with size equal to fileSize and open it for writing
+        3) Determine starting positions and lenthgs to each write needed
+        4) Run the writes in parallel
+        5) End!
+*/
 let main = async function(){
 
     let args = parser.parseArgs();
@@ -46,6 +54,7 @@ let main = async function(){
 
     //chunkCount and chunkSize determine how many chunks are to be downloaded and how big each is, respectively
     //it is important to note that only one can be specified by the user
+    //I went with Math.floor instead of a bitwise operation here because it easier to read and there's not a bottle neck here
     let chunkCount;
     let chunkSize;
     if(args['chunks']){
@@ -63,6 +72,7 @@ let main = async function(){
         chunkCount = 1;
         chunkSize = byteCount;
     }
+    //The last chunk will be the size of the remainder if it's greater than zero
     const remainder = byteCount % chunkSize;
 
     let fileName;
@@ -71,7 +81,7 @@ let main = async function(){
         fileName = downloadDir + args['name']
     }
     else{
-        fileName = downloadDir + 'test.txt';
+        fileName =downloadDir + target.split('/').slice(-1)[0];
     }
 
     let startPos = 0;

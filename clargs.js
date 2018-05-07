@@ -17,7 +17,7 @@ parser.addArgument(
     }
 );
 parser.addArgument(
-    [ '--size'],
+    [ '-s', '--size'],
     {
         help: 'Size in bytes to download',
         type: 'int'
