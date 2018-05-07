@@ -1,3 +1,6 @@
+//Argument parser setup is handled here
+//It's pretty boring tbh
+
 const ArgumentParser = require('argparse').ArgumentParser;
 
 let parser = new ArgumentParser({
@@ -14,7 +17,7 @@ parser.addArgument(
     }
 );
 parser.addArgument(
-    ['-s', '--size'],
+    [ '--size'],
     {
         help: 'Size in bytes to download',
         type: 'int'
@@ -42,6 +45,5 @@ parser.addArgument(
         type: 'string'
     }
 );
-
 
 module.exports = parser;

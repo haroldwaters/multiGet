@@ -6,9 +6,6 @@ const parser = require('./clargs');
 const {getContentChunk, getContentInfo} = require('./requests');
 const {makeBlankFile} = require('./filework');
 
-// let target = 'https://httpbin.org/range/1024';
-let target = 'http://40ff26ef.bwtest-aws.pravala.com/384MB.jar';
-
 /**
  * @description Returns num2 if num1 is larger else returns num1 
  * @param {int} num1 
@@ -23,7 +20,6 @@ let checkSize = function(testSize, fileSize){
     }
 
 }
-//===============================================
 
 let main = async function(){
 
@@ -38,6 +34,7 @@ let main = async function(){
         throw new Error('Chunks and chunksize cannot both be specified!');
     }
 
+    //bytecount determines how much is to be downloaded
     let byteCount;
     if(args['size']){
         //Size shouldn't be allowed to be greater that actual file size
@@ -47,6 +44,8 @@ let main = async function(){
         byteCount = contentLength;
     }
 
+    //chunkCount and chunkSize determine how many chunks are to be downloaded and how big each is, respectively
+    //it is important to note that only one can be specified by the user
     let chunkCount;
     let chunkSize;
     if(args['chunks']){
