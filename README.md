@@ -1,0 +1,1 @@
+Main is in multiGet.js, run "node multiGet.js --help" for instructions
