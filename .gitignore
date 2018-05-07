@@ -1,4 +1,3 @@
 testfile/*
-downloads/*
 node_modules/*
 *.code-workspace

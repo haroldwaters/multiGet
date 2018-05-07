@@ -92,7 +92,7 @@ let main = async function(){
 
     //Create a file decriptor for the file made above
     fs.open(fileName, 'w', (err, fd)=> {
-        console.time('timeToWrite');
+        console.time('Elapsed Time:');
 
         //Increment startPos by chunkSize and add to startPositions
         //If there is a remainder, it will be added last
@@ -114,7 +114,7 @@ let main = async function(){
                 callback(err);
             });
         },(err)=>{
-            console.timeEnd('timeToWrite');
+            console.timeEnd('Elapsed Time:');
         });
     });
 }
