@@ -2,9 +2,9 @@
 
 const fs = require('fs');
 const async = require('async')
-const parser = require('./clargs');
-const {getContentChunk, getContentInfo} = require('./requests');
-const {makeBlankFile} = require('./filework');
+const parser = require('./resources/clargs');
+const {getContentChunk, getContentInfo} = require('./resources/requests');
+const {makeBlankFile} = require('./resources/filework');
 
 /**
  * @description Returns num2 if num1 is larger else returns num1 
