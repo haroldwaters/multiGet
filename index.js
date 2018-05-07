@@ -75,31 +75,35 @@ let main = async function(){
         fileName = downloadDir + 'test.txt';
     }
 
-    let calls = [];
     let startPos = 0;
+    let startPositions = [];
 
     //Create the space to write to by creating a file the same size as what's being downloaded
     makeBlankFile(fileName, parseInt(byteCount));
-    //Create a file decriptor for the file just opened
+
+    //Create a file decriptor for the file made above
     fs.open(fileName, 'w', (err, fd)=> {
         console.time('timeToWrite');
+
+        //Increment startPos by chunkSize and add to startPositions
+        //If there is a remainder, it will be added last
         while(startPos < byteCount){
             if( startPos + remainder < byteCount){
-                calls.push({startPos: startPos, size: chunkSize});
+                startPositions.push({startPos: startPos, size: chunkSize});
                 startPos += chunkSize;
             }
             else{
-                calls.push({startPos: startPos, size: remainder});
+                startPositions.push({startPos: startPos, size: remainder});
                 startPos += remainder;
             }
         }
-        async.each(calls, (item, callback)=>{
+        async.each(startPositions, (item, callback)=>{
             getContentChunk(target, fd, item.startPos, item.size).then((res)=>{
                 callback(null, res);
             }).catch((err)=>{
                 callback(err);
             });
-        },(err, results)=>{
+        },(err)=>{
             console.timeEnd('timeToWrite');
         });
     });
