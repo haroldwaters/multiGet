@@ -30,7 +30,6 @@ let getContentInfo = function(target){
  * @param {FileDescriptor} fd 
  * @param {Int} start 
  * @param {Int} size 
- * @return {Promise}
  */
 let getContentChunk = function(target, start, size, path){
     //Parse the given target so the path can be pulled out

@@ -24,9 +24,9 @@ let checkSize = function(testSize, fileSize){
     Main follows these basic steps
         1) Parse args and determine fileSize, chunkCount, and chunkSize
         2) Create a blank file with size equal to fileSize
-        3) Determine starting positions and lenthgs to each write needed
-        4) Run the writes in parallel
-        5) End!
+        3) Create read and write streams set at appropriate start points (determined by chunks/chunksize)
+        4) Once readstreams are resolved, pipe them to matching write stream
+        5) Say goodbye
 */
 let main = async function(){
 
@@ -93,7 +93,7 @@ let main = async function(){
 
     //Get each getContentChunk resolves to an http.IncomingMessage that
     //is going to be piped to the writestream matched to the same point in the
-    //file
+    //file retreived by getContentChunk
     //Increment startPos by chunkSize and add to startPositions
     //If there is a remainder, it will be added last
     let promiseArr = [];
@@ -116,6 +116,7 @@ let main = async function(){
 
     //This is only here to end the timer
     process.on('beforeExit',()=>{
+        console.log('Download complete!');
         console.timeEnd('Elapsed Time:');
     })
 }
