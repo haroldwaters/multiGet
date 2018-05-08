@@ -1,10 +1,9 @@
 'use strict'
 
 const fs = require('fs');
-const async = require('async')
 const parser = require('./resources/clargs');
 const {getContentChunk, getContentInfo} = require('./resources/requests');
-const {makeBlankFile} = require('./resources/filework');
+const {makeBlankFile, chunkWriteStream} = require('./resources/filework');
 
 /**
  * @description Returns num2 if num1 is larger else returns num1 
@@ -92,28 +91,33 @@ let main = async function(){
 
     console.time('Elapsed Time:');
 
+    //Get each getContentChunk resolves to an http.IncomingMessage that
+    //is going to be piped to the writestream matched to the same point in the
+    //file
     //Increment startPos by chunkSize and add to startPositions
     //If there is a remainder, it will be added last
+    let promiseArr = [];
+    let writeStreams = [];
     for(startPos = 0; startPos < byteCount - remainder; startPos += chunkSize){
-        startPositions.push({startPos: startPos, size: chunkSize});
+        promiseArr.push(getContentChunk(target, startPos, chunkSize, fileName));
+        writeStreams.push(chunkWriteStream(fileName,startPos));
     }
     if(remainder){
-        startPositions.push({startPos: startPos, size: remainder});
+        promiseArr.push(getContentChunk(target, startPos, remainder, fileName));
+        writeStreams.push(chunkWriteStream(fileName,startPos));
     }
-    //There were 3 iterations (one before this, visible in git history, and one after, not visible) of this part
-    //Originally the calls were made with a promise and resolved with Promise.all(), but that didn't show any real
-    //improvement as chunkCount increased. The third version involved forking and increased the complexity
-    //of the operation for little benefit. The async module used here is the Goldilocks of ease-of-use and performance
-    //from my testing.
-    async.each(startPositions, (item, callback)=>{
-        getContentChunk(target, item.startPos, item.size, fileName).then((res)=>{
-            callback(null, res);
-        }).catch((err)=>{
-            callback(err);
+
+    //Each response gets piped to it's matching stream
+    Promise.all(promiseArr).then((responses)=>{
+        responses.forEach((response,i)=>{
+            response.pipe(writeStreams[i]);
         });
-    },(err)=>{
-        console.timeEnd('Elapsed Time:');
     });
+
+    //This is only here to end the timer
+    process.on('beforeExit',()=>{
+        console.timeEnd('Elapsed Time:');
+    })
 }
 
 main()

@@ -13,11 +13,11 @@ node multiGet.js $target -c 1
 diff -s $downloaddest $testfiledest
 
 echo 'Testing with 2 chunks'
-node multiGet.js $target -c 2
+node multiGet.js $target -c 4
 diff -s $downloaddest $testfiledest
 
 echo 'Testing with 7 chunks'
-node multiGet.js $target -c 7
+node multiGet.js $target -c 10
 diff -s $downloaddest $testfiledest
 
 echo 'Testing with 1 chunk, 10000 bytes'

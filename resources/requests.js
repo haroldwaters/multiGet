@@ -1,6 +1,5 @@
 const http = require('http');
 const { URL } = require('url');
-const { chunkWriteStream } = require('./filework');
 
 let didFail = function(statusCode){
     return statusCode < 200 && statusCode >= 300;
@@ -47,20 +46,8 @@ let getContentChunk = function(target, start, size, path){
     return new Promise((resolve,reject)=>{
         http.get(options, (res) => {
 
-                let buffers = [];
+                resolve(res);
                 
-                wstream = chunkWriteStream(path,start);
-
-                if(didFail(res.statusCode)) reject(new Error('Request Failed'))
-                res.on('error', (error) => reject(new Error(`Error occured retreiving chunks ${start}-${start + size}`)));
-
-                res.pipe(wstream);
-
-                res.on('end', ()=>{
-                    
-                    resolve(true);
-
-                });
             });
         });
 }

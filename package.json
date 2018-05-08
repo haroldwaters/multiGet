@@ -4,8 +4,7 @@
   "description": "Downloads files in chunks",
   "main": "multiGet.js",
   "dependencies": {
-    "argparse": "^1.0.10",
-    "async": "^2.6.0"
+    "argparse": "^1.0.10"
   },
   "devDependencies": {
     "mocha": "^5.1.1"
