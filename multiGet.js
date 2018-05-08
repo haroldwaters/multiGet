@@ -9,6 +9,7 @@ const {makeBlankFile, chunkWriteStream} = require('./resources/filework');
  * @description Returns num2 if num1 is larger else returns num1 
  * @param {int} num1 
  * @param {int} num2 
+ * @returns {int}
  */
 let checkSize = function(testSize, fileSize){
     if(testSize > fileSize){
@@ -67,7 +68,7 @@ let main = async function(){
         chunkCount = Math.floor(byteCount/chunkSize);
     }
     else{
-        //If not specified on cl, download entire file in one chunk
+        //If not specified on cli, download entire file in one chunk
         chunkCount = 1;
         chunkSize = byteCount;
     }
@@ -83,21 +84,20 @@ let main = async function(){
         fileName =downloadDir + target.split('/').slice(-1)[0];
     }
 
-    let startPos = 0;
-    let startPositions = [];
 
     //Create the space to write to by creating a file the same size as what's being downloaded
     makeBlankFile(fileName, parseInt(byteCount));
 
     console.time('Elapsed Time:');
 
-    //Get each getContentChunk resolves to an http.IncomingMessage that
-    //is going to be piped to the writestream matched to the same point in the
+    //Each getContentChunk resolves to an http.IncomingMessage that
+    //is going to be piped to the writeStream matched to the same point in the
     //file retreived by getContentChunk
     //Increment startPos by chunkSize and add to startPositions
-    //If there is a remainder, it will be added last
+    //If there is a remainder, it will be added to the end
     let promiseArr = [];
     let writeStreams = [];
+    let startPos = 0;
     for(startPos = 0; startPos < byteCount - remainder; startPos += chunkSize){
         promiseArr.push(getContentChunk(target, startPos, chunkSize, fileName));
         writeStreams.push(chunkWriteStream(fileName,startPos));
@@ -117,7 +117,7 @@ let main = async function(){
         });
     });
 
-    //This is only here to end the timer
+    //This is only here to end the timer, and to say goodbye which is both important and polite
     process.on('beforeExit',()=>{
         console.log('Download complete!');
         console.timeEnd('Elapsed Time:');
