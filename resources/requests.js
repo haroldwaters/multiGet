@@ -44,11 +44,10 @@ let getContentChunk = function(target, start, size, path){
     };
     return new Promise((resolve,reject)=>{
         http.get(options, (res) => {
-
-                resolve(res);
-                
-            });
+            if(didFail(res.statusCode)) reject(new Error('Request Failed'))
+            resolve(res);
         });
+    });
 }
 
 module.exports = {

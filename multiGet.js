@@ -111,6 +111,9 @@ let main = async function(){
     Promise.all(promiseArr).then((responses)=>{
         responses.forEach((response,i)=>{
             response.pipe(writeStreams[i]);
+        }).catch((e)=>{
+            console.log('There was an error piping streams!');
+            console.log(e);
         });
     });
 
