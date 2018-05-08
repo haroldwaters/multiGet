@@ -24,7 +24,7 @@ let checkSize = function(testSize, fileSize){
 /*
     Main follows these basic steps
         1) Parse args and determine fileSize, chunkCount, and chunkSize
-        2) Create a blank file with size equal to fileSize and open it for writing
+        2) Create a blank file with size equal to fileSize
         3) Determine starting positions and lenthgs to each write needed
         4) Run the writes in parallel
         5) End!
@@ -90,32 +90,29 @@ let main = async function(){
     //Create the space to write to by creating a file the same size as what's being downloaded
     makeBlankFile(fileName, parseInt(byteCount));
 
-    //Create a file decriptor for the file made above
-    fs.open(fileName, 'w', (err, fd)=> {
-        console.time('Elapsed Time:');
+    console.time('Elapsed Time:');
 
-        //Increment startPos by chunkSize and add to startPositions
-        //If there is a remainder, it will be added last
-        for(startPos = 0; startPos < byteCount - remainder; startPos += chunkSize){
-            startPositions.push({startPos: startPos, size: chunkSize});
-        }
-        if(remainder){
-            startPositions.push({startPos: startPos, size: remainder});
-        }
-        //There were 3 iterations (one before this, visible in git history, and one after, not visible) of this part
-        //Originally the calls were made with a promise and resolved with Promise.all(), but that didn't show any real
-        //improvement as chunkCount increased. The third version involved forking and increased the complexity
-        //of the operation for little benefit. The async module used here is the Goldilocks of ease-of-use and performance
-        //from my testing.
-        async.each(startPositions, (item, callback)=>{
-            getContentChunk(target, fd, item.startPos, item.size).then((res)=>{
-                callback(null, res);
-            }).catch((err)=>{
-                callback(err);
-            });
-        },(err)=>{
-            console.timeEnd('Elapsed Time:');
+    //Increment startPos by chunkSize and add to startPositions
+    //If there is a remainder, it will be added last
+    for(startPos = 0; startPos < byteCount - remainder; startPos += chunkSize){
+        startPositions.push({startPos: startPos, size: chunkSize});
+    }
+    if(remainder){
+        startPositions.push({startPos: startPos, size: remainder});
+    }
+    //There were 3 iterations (one before this, visible in git history, and one after, not visible) of this part
+    //Originally the calls were made with a promise and resolved with Promise.all(), but that didn't show any real
+    //improvement as chunkCount increased. The third version involved forking and increased the complexity
+    //of the operation for little benefit. The async module used here is the Goldilocks of ease-of-use and performance
+    //from my testing.
+    async.each(startPositions, (item, callback)=>{
+        getContentChunk(target, item.startPos, item.size, fileName).then((res)=>{
+            callback(null, res);
+        }).catch((err)=>{
+            callback(err);
         });
+    },(err)=>{
+        console.timeEnd('Elapsed Time:');
     });
 }
 

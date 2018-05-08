@@ -2,21 +2,17 @@ const fs = require('fs');
 
 /**
  * 
- * @param {FileDescriptor} fd 
- * @param {Int} start 
- * @param {Int} size 
- * @param {Buffer} buffer 
+ * @param {string} path 
+ * @param {int} start 
  */
-let writeChunk = function(fd, start, size, buffer){
-    //This function does a random write to the file belonging to fd
-    //write begins at start, and continues for length size
-    return new Promise((resolve, reject) => {
-        fs.write(fd, buffer, 0, size, start, (err, written)=>{
-            if(err) reject(err);
-            resolve(written);
-        });
-    });
+let chuckWriteStream = function(path, start){
+    //Returns a writeStream to a file at "Path" that will begin writing at "start"
+    let options = {
+        start: start,
+        flags: 'r+'
+    }
 
+    return fs.createWriteStream(path, options);
 }
 
 /**
@@ -32,6 +28,6 @@ let makeBlankFile = function(filePath, byteCount){
 }
 
 module.exports = {
-    writeChunk: writeChunk,
+    chunkWriteStream: chuckWriteStream,
     makeBlankFile : makeBlankFile
 }
