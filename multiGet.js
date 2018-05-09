@@ -35,8 +35,17 @@ let main = async function(){
 
     const target = args['target'];
 
-    let contentInfo = await getContentInfo(target);
-    let contentLength = contentInfo.headers['content-length'];
+    //This function makes a HEAD request to the target to get the actual file size
+    //this will be used to check requested download size
+    let contentLength;
+    try{
+        let contentInfo = await getContentInfo(target);
+        contentLength = contentInfo.headers['content-length'];
+    }
+    catch (error) {
+        console.error("An error occured during head request, defaulting to requested file size");
+        contentLength = args['size'];
+    }
 
     if(args['chunksize'] && args['chunks']){
         throw new Error('Chunks and chunksize cannot both be specified!');
@@ -85,8 +94,14 @@ let main = async function(){
     }
 
 
-    //Create the space to write to by creating a file the same size as what's being downloaded
-    makeBlankFile(fileName, parseInt(byteCount));
+    try{
+        //Create the space to write to by creating a file the same size as what's being downloaded
+        makeBlankFile(fileName, parseInt(byteCount));
+    }
+    catch(error){
+        console.error('An error ocurred during dummy file creation');
+        throw error;
+    }
 
     console.time('Elapsed Time:');
 
@@ -98,23 +113,29 @@ let main = async function(){
     let promiseArr = [];
     let writeStreams = [];
     let startPos = 0;
-    for(startPos = 0; startPos < byteCount - remainder; startPos += chunkSize){
-        promiseArr.push(getContentChunk(target, startPos, chunkSize, fileName));
-        writeStreams.push(chunkWriteStream(fileName,startPos));
+    try{
+        for(startPos = 0; startPos < byteCount - remainder; startPos += chunkSize){
+            promiseArr.push(getContentChunk(target, startPos, chunkSize, fileName));
+            writeStreams.push(chunkWriteStream(fileName,startPos));
+        }
+        if(remainder){
+            promiseArr.push(getContentChunk(target, startPos, remainder, fileName));
+            writeStreams.push(chunkWriteStream(fileName,startPos));
+        }
     }
-    if(remainder){
-        promiseArr.push(getContentChunk(target, startPos, remainder, fileName));
-        writeStreams.push(chunkWriteStream(fileName,startPos));
+    catch(error){
+        console.error('An error occured while creating read/write streams');
+        throw error;
     }
 
     //Each response gets piped to it's matching stream
     Promise.all(promiseArr).then((responses)=>{
         responses.forEach((response,i)=>{
             response.pipe(writeStreams[i]);
-        }).catch((e)=>{
-            console.log('There was an error piping streams!');
-            console.log(e);
-        });
+        })
+    }).catch((error)=>{
+        console.error('There was an error piping streams!');
+        throw error;
     });
 
     //This is only here to end the timer, and to say goodbye which is both important and polite
@@ -126,4 +147,4 @@ let main = async function(){
 
 main()
     .then(()=> {return 0;})
-    .catch((err)=> {throw err});
+    .catch((err)=> {throw err;});
