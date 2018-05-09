@@ -8,7 +8,7 @@ const fs = require('fs');
  */
 let chuckWriteStream = function(path, start){
     let options = {
-        start: start,
+        start: parseInt(start),
         //      \/ for random write access without truncating
         flags: 'r+'
     }

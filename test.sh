@@ -2,7 +2,7 @@
 target='http://40ff26ef.bwtest-aws.pravala.com/384MB.jar'
 testfiledest='./testfile/384MB.jar'
 downloaddest='./downloads/384MB.jar'
-filesize=10000
+filesize=10
 
 if [ ! -e $testfiledest ]; then
     echo 'Comparison file not found, downloading it now'
@@ -11,15 +11,15 @@ fi
 
 echo "Testing with 1 chunk, $filesize bytes"
 node multiGet.js $target -c 1 -s $filesize -n 'test1'
-cmp -n $filesize -bl $downloaddest $testfiledest
+cmp -n $filesize -bl ./downloads/test1 $testfiledest
 
 echo "Testing with 2 chunks, $filesize bytes"
 node multiGet.js $target -c 2 -s $filesize -n 'test2'
-cmp -n $filesize -bl $downloaddest $testfiledest
+cmp -n $filesize -bl ./downloads/test2 $testfiledest
 
 echo "Testing with 3 chunks, $filesize bytes"
 node multiGet.js $target -c 3 -s $filesize -n 'test3'
-cmp -n $filesize -bl $downloaddest $testfiledest
+cmp -n $filesize -bl ./downloads/test3 $testfiledest
 
 echo 'Testing with 1 chunk'
 node multiGet.js $target -c 1
@@ -34,4 +34,4 @@ node multiGet.js $target -c 3
 diff -s $downloaddest $testfiledest
 
 
-# rm $testfiledest
+rm $testfiledest

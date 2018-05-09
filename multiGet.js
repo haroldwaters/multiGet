@@ -1,9 +1,9 @@
 'use strict'
 
-const fs = require('fs');
 const parser = require('./resources/clargs');
-const {getContentChunk, getContentInfo} = require('./resources/requests');
-const {makeBlankFile, chunkWriteStream} = require('./resources/filework');
+const {getContentInfo} = require('./resources/requests');
+const {makeBlankFile} = require('./resources/filework');
+const {fork} = require('child_process');
 
 /**
  * @description Returns num2 if num1 is larger else returns num1 
@@ -25,9 +25,9 @@ let checkSize = function(testSize, fileSize){
     Main follows these basic steps
         1) Parse args and determine fileSize, chunkCount, and chunkSize
         2) Create a blank file with size equal to fileSize
-        3) Create read and write streams set at appropriate start points (determined by chunks/chunksize)
-        4) Once readstreams are resolved, pipe them to matching write stream
-        5) Say goodbye
+        3) Pass target, start points, chunk sizes to a forked process 
+           that will fetch and write the data for each chunk
+        4) Say goodbye
 */
 let main = async function(){
 
@@ -105,38 +105,30 @@ let main = async function(){
 
     console.time('Elapsed Time:');
 
-    //Each getContentChunk resolves to an http.IncomingMessage that
-    //is going to be piped to the writeStream matched to the same point in the
-    //file retreived by getContentChunk
+    //The downloads and writes will be handled by mixedStreams
     //Increment startPos by chunkSize and add to startPositions
     //If there is a remainder, it will be added to the end
-    let promiseArr = [];
-    let writeStreams = [];
     let startPos = 0;
+    let forks = [];
     try{
         for(startPos = 0; startPos < byteCount - remainder; startPos += chunkSize){
-            promiseArr.push(getContentChunk(target, startPos, chunkSize, fileName));
-            writeStreams.push(chunkWriteStream(fileName,startPos));
+
+            fork('./mixedStreams.js',[JSON.stringify({target: target, 
+                                                      startPos: startPos,
+                                                      chunkSize: chunkSize,
+                                                      fileName :fileName})]);
         }
         if(remainder){
-            promiseArr.push(getContentChunk(target, startPos, remainder, fileName));
-            writeStreams.push(chunkWriteStream(fileName,startPos));
+            fork('./mixedStreams.js',[JSON.stringify({target: target, 
+                                                      startPos: startPos,
+                                                      chunkSize: remainder,
+                                                      fileName :fileName})]);
         }
     }
     catch(error){
         console.error('An error occured while creating read/write streams');
         throw error;
     }
-
-    //Each response gets piped to it's matching stream
-    Promise.all(promiseArr).then((responses)=>{
-        responses.forEach((response,i)=>{
-            response.pipe(writeStreams[i]);
-        })
-    }).catch((error)=>{
-        console.error('There was an error piping streams!');
-        throw error;
-    });
 
     //This is only here to end the timer, and to say goodbye which is both important and polite
     process.on('beforeExit',()=>{
